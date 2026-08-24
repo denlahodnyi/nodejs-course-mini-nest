@@ -20,9 +20,8 @@ class State {
   public count: number = 0;
   public date: number = Date.now();
 
-  constructor(initCount: number) {
+  constructor() {
     console.log('App init');
-    this.count = initCount ?? 0;
   }
 
   public increment() {
@@ -48,12 +47,17 @@ class UsersController {
   }
 }
 
-@Bind({ [Symbol.for('config')]: config, port: 3000, locales: ['en-US'] })
+class Locales {
+  loc = ['en-US'];
+}
+
+@Bind({ [Symbol.for('config')]: config, port: 3000, locales: new Locales() })
 @Injectable()
 class App {
   constructor(
     @Inject('port') private port: number,
     @Inject(Symbol.for('config')) private config: { timezone: string },
+    @Inject('locales') private locales: { loc: string[] },
     private users: UsersController,
     private logger: Logger,
     private state: State,
@@ -62,6 +66,7 @@ class App {
   public start() {
     this.logger.log(`App starting: PORT = ${this.port}`);
     this.logger.log(`Config: ${JSON.stringify(this.config)}`);
+    this.logger.log(`Locales: ${this.locales.loc}`);
     this.state.increment();
     this.logger.log(`App: state count ${this.state.count}`);
     this.users.getUser();

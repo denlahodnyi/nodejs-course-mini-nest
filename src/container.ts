@@ -20,20 +20,20 @@ const builtIns = [
 export default class Container {
   private singletons = new Map();
 
-  public resolve<T>(ctor: Ctor<T>, resolved?: string[]): T {
+  public resolve<T>(ctor: Ctor<T>, resolved?: Set<Ctor<unknown>>): T {
     // check if injectable
     if (!Reflect.getMetadata(IS_INJECTABLE, ctor)) {
       throw new Error(`${ctor.name} is not injectable`);
     }
 
-    const resolvedSet = resolved ? [...resolved] : [];
+    const resolvedSet: Set<Ctor<unknown>> = resolved ? new Set(...[resolved]) : new Set();
     // check circular dep
-    if (resolvedSet.includes(ctor.name)) {
+    if (resolvedSet.has(ctor)) {
       throw new Error(
-        `Circular dependencies: ${[...resolvedSet, ctor.name].join(' -> ')}`,
+        `Circular dependencies: ${[...resolvedSet.values().map(c => c.name), ctor.name].join(' -> ')}`,
       );
     }
-    resolvedSet.push(ctor.name);
+    resolvedSet.add(ctor);
 
     // pull cached instance
     if (this.singletons.has(ctor)) return this.singletons.get(ctor);
@@ -42,18 +42,44 @@ export default class Container {
     const deps: FunctionConstructor[] = Reflect.getMetadata('design:paramtypes', ctor) ?? [];
     // resolve child deps
     const resolvedDeps = deps.map((dep, paramIdx) => {
-      // check it this is a custom class
-      if (!builtIns.includes(dep)) return this.resolve(dep, resolvedSet);
-      // otherwise find dep by @Inject + @Bind
-      const paramTokens: ParamTokens = Reflect.getMetadata(
+      const paramTokens: ParamTokens | undefined = Reflect.getMetadata(
         PARAM_TOKENS,
         ctor,
       );
-      const tokenBindings: Bindings = Reflect.getMetadata(BINDINGS, ctor);
-      if (tokenBindings && paramTokens && paramTokens.has(paramIdx)) {
-        const token = paramTokens.get(paramIdx)!;
-        return tokenBindings.get(token);
+      // check it this is a custom class (and no need @Inject by token)
+      if (!builtIns.includes(dep) && !paramTokens?.has(paramIdx)) {
+        return this.resolve(dep, resolvedSet);
       }
+      // otherwise find dep by @Inject + @Bind
+      const tokenBindings: Bindings | undefined = Reflect.getMetadata(BINDINGS, ctor);
+
+      if (!paramTokens) {
+        throw new Error(
+          `Cannot resolve: no tokens at [${paramIdx}] for ${ctor}`,
+        );
+      }
+      if (!tokenBindings) {
+        throw new Error(
+          `Cannot resolve: no registered dependency at [${paramIdx}] for ${ctor}`,
+        );
+      }
+      const token = paramTokens.get(paramIdx)!;
+
+      if (!token) {
+        throw new Error(
+          `Cannot resolve: no token at [${paramIdx}] index for ${ctor}`,
+        );
+      }
+
+      const explicitDep = tokenBindings.get(token);
+
+      if (!explicitDep) {
+        throw new Error(
+        `Cannot resolve: no bind dependency for "${String(token)}" at [${paramIdx}] index in ${ctor}`,
+        );
+      }
+
+      return explicitDep;
     });
 
     const instance = new ctor(...resolvedDeps);

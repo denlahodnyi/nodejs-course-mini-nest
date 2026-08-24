@@ -80,12 +80,37 @@ test('@Inject injects dependencies by the token', async () => {
     constructor(
       @Inject(Symbol.for('port')) public port: number,
       @Inject('config') public conf: { dev: boolean; },
-      public missedCong: { user: string }
     ) {}
   }
   const container = new Container();
   const service = container.resolve(A);
   expect(service.port).toBe(3000);
   expect(service.conf).toStrictEqual({ dev: true });
-  expect(service.missedCong).toBeUndefined();
+});
+
+test('Throws if there is no token for the erased type', async () => {
+  @Bind({ config: { dev: true } })
+  @Injectable()
+  class A {
+    constructor(
+      public conf: { dev: boolean; },
+    ) {}
+  }
+  const container = new Container();
+  expect(() => container.resolve(A)).toThrow(
+    /cannot resolve/i,
+  );
+});
+
+test('Throws if there is no registered dependency for the erased type', async () => {
+  @Injectable()
+  class A {
+    constructor(
+      public conf: { dev: boolean; },
+    ) {}
+  }
+  const container = new Container();
+  expect(() => container.resolve(A)).toThrow(
+    /cannot resolve/i,
+  );
 });
