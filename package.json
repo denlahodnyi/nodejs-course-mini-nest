@@ -1,0 +1,22 @@
+{
+  "name": "nodejs-course-mininest",
+  "scripts": {
+    "dev": "tsc-watch --onSuccess 'node dist/index.js'",
+    "dev:ts-node": "node --inspect --no-deprecation --disable-warning=ExperimentalWarning --loader ts-node/esm src/index.ts",
+    "build": "tsc",
+    "test": "vitest run"
+  },
+  "type": "module",
+  "dependencies": {
+    "reflect-metadata": "^0.2.2"
+  },
+  "devDependencies": {
+    "@rollup/plugin-typescript": "^12.3.0",
+    "@types/node": "^26.2.0",
+    "ts-node": "^10.9.2",
+    "tsc-watch": "^7.2.1",
+    "tslib": "^2.8.1",
+    "typescript": "^6.0.3",
+    "vitest": "4.1.10"
+  }
+}

@@ -1,0 +1,37 @@
+services:
+  test:
+    build:
+      target: tests
+      context: .
+      dockerfile: Dockerfile
+  api:
+    build:
+      target: runner
+      context: .
+      dockerfile: Dockerfile
+    # ports:
+    #   - "8080"
+    # environment:
+    #   DB_URL: "postgresql://admin:secret@db:5432/demo_db"
+    # depends_on:
+    #   db:
+    #     condition: service_healthy
+#   db:
+#     # image: postgresql:18-alpine
+#     build:
+#       context: .
+#       dockerfile: Dockerfile.database
+#     environment:
+#       POSTGRES_USER: "admin"
+#       POSTGRES_PASSWORD: "secret"
+#       POSTGRES_DB: "demo_db"
+#     volumes:
+#       - docker-demo-db:/var/lib/postgresql
+#     healthcheck:
+#       test: ["CMD-SHELL", "pg_isready -U admin -d demo_db"]
+#       interval: 5s
+#       timeout: 5s
+#       retries: 3
+#       start_period: 10s
+# volumes:
+#   docker-demo-db:
