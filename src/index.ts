@@ -1,96 +1,90 @@
-import Container from './container.js';
-import Bind from './decorators/bind.js';
+import Controller from './decorators/controller.js';
+import { Get, Post } from './decorators/methods.js';
 import Inject from './decorators/inject.js';
 import Injectable from './decorators/injectable.js';
+import Module from './decorators/module.js';
+import { Query, Param, Body } from './decorators/params.js';
+import Dispatcher from './dispatcher.js';
+import CreateUserDto from './dto/create-user.dto.js';
+import ValidationPipe from './pipes/validation.pipe.js';
+
+const PORT = 8080;
 
 @Injectable()
 class Logger {
   constructor() {
     console.log('Logger init');
   }
-  log(message: unknown) {
+  public log(message: unknown) {
     console.log('LOG: ', message);
   }
 }
 
 const config = { timezone: 'Europe/London', user: 'johnny' };
 
-@Injectable({ scope: 'transient' })
-class State {
-  public count: number = 0;
-  public date: number = Date.now();
-
-  constructor() {
-    console.log('App init');
-  }
-
-  public increment() {
-    this.count += 1;
-  }
-}
-
-@Bind({ [Symbol.for('config')]: config })
 @Injectable()
-class UsersController {
+class UsersService {
   constructor(
     @Inject(Symbol.for('config')) private config: { user: string },
     private logger: Logger,
-    private state: State,
   ) {}
 
-  public getUser() {
-    this.logger.log(`UserController: current user is ${this.config.user}`);
-    this.state.increment();
-    this.state.increment();
-    this.state.increment();
-    this.logger.log(`UserController: state count ${this.state.count}`);
-  }
+  users: CreateUserDto[] = [
+    { name: 'Den', country: 'Ukraine', email: 'den@example.com', age: 20 },
+    { name: 'John', country: 'US', email: 'john@example.com', age: 32 },
+  ];
 }
 
-class Locales {
-  loc = ['en-US'];
-}
-
-@Bind({ [Symbol.for('config')]: config, port: 3000, locales: new Locales() })
-@Injectable()
-class App {
+@Controller('users')
+class UsersController {
   constructor(
-    @Inject('port') private port: number,
-    @Inject(Symbol.for('config')) private config: { timezone: string },
-    @Inject('locales') private locales: { loc: string[] },
-    private users: UsersController,
     private logger: Logger,
-    private state: State,
+    private userService: UsersService,
   ) {}
 
-  public start() {
-    this.logger.log(`App starting: PORT = ${this.port}`);
-    this.logger.log(`Config: ${JSON.stringify(this.config)}`);
-    this.logger.log(`Locales: ${this.locales.loc}`);
-    this.state.increment();
-    this.logger.log(`App: state count ${this.state.count}`);
-    this.users.getUser();
+  @Get()
+  getAll() {
+    this.logger.log('[GET] /users');
+    return this.userService.users;
+  }
+
+  @Get(':id')
+  async getById(@Param(':id') id: string, @Query('attr') attr: string) {
+    this.logger.log(`[GET] /users/:id ${id}`);
+    const user = this.userService.users[+id] || {};
+    return attr ? { [attr]: user[attr as keyof typeof user] } : user;
+  }
+
+  @Post()
+  createUser(@Body(ValidationPipe) newUser: CreateUserDto) {
+    this.logger.log(`[POST] /users ${JSON.stringify(newUser)}`);
+    this.userService.users.push(newUser);
   }
 }
 
-const container = new Container();
-const appService = container.resolve(App);
-appService.start();
+@Controller()
+class RootController {
+  constructor(private logger: Logger) {}
 
-console.log('service', appService);
+  @Get('health')
+  healthCheck() {
+    this.logger.log('[GET] /health');
+    return { ok: true };
+  }
+}
 
-const container2 = new Container();
-@Injectable()
-class B {
-  constructor(a: any) {}
+@Module({
+  providers: [
+    Logger,
+    UsersService,
+    { provide: Symbol.for('config'), useValue: config },
+  ],
+  controllers: [UsersController, RootController],
+})
+class AppModule {
+  constructor(private logger: Logger) {
+    console.log('App initiated');
+  }
 }
-@Injectable()
-class A {
-  constructor(b: B) {}
-}
-Reflect.defineMetadata('design:paramtypes', [A], B);
-try {
-  container2.resolve(A);
-} catch (err) {
-  console.error(err);
-}
+
+new Dispatcher(AppModule).listen(PORT);

@@ -1,4 +1,13 @@
 export const IS_INJECTABLE = Symbol('is_injectable');
+export const IS_MODULE = Symbol('is_module');
+export const IS_CONTROLLER = Symbol('is_controller');
 export const SCOPE = Symbol('scope');
 export const BINDINGS = Symbol('bindings');
 export const PARAM_TOKENS = Symbol('param_tokens');
+export const CONTROLLERS = Symbol('controllers');
+export const PROVIDERS = Symbol('providers');
+export const PREFIX = Symbol('controller_prefix');
+export const ROUTES = Symbol('routes');
+export const ROUTE_PARAMS = Symbol('route_params');
+// export const POST_ROUTES = Symbol('post_routes');
+export const DESIGN_PARAM_TOKEN = 'design:paramtypes';
