@@ -1,7 +1,26 @@
 import type { ClientRequest, IncomingMessage } from 'node:http';
 import type { RoutesMetadata } from './decorators/methods.js';
 import { DESIGN_PARAM_TOKEN, ROUTE_PARAMS, ROUTES } from './tokens.js';
-import type { Controller, Ctor, RouteParamsMetadata } from './types.js';
+import {
+  type Controller,
+  type Ctor,
+  type Pipe,
+  type RouteParamsMetadata,
+} from './types.js';
+
+export class ArgValidator {
+  constructor(
+    private pipe: Pipe,
+    private data: unknown,
+    private meta: Ctor<unknown>,
+  ) {}
+  async validate() {
+    return await this.pipe.transform(
+      this.data,
+      this.meta, // DTO
+    );
+  }
+}
 
 export default class Router {
   public static async getHandler(
@@ -108,22 +127,17 @@ export default class Router {
               : Object.fromEntries(fullUrl.searchParams.entries());
             finalRouteData.handlerArgs.push(query);
           } else if (handlerArgConf?.type === 'body') {
-            let validatedBody = body;
-            if (handlerArgConf.pipe) {
-              const pipe =
-                typeof handlerArgConf.pipe === 'function'
-                  ? new handlerArgConf.pipe()
-                  : handlerArgConf.pipe;
-              try {
-                validatedBody = await pipe.transform(
-                  validatedBody,
-                  handlerParamMeta,
-                );
-              } catch (err) {
-                throw err;
-              }
+            const pipe =
+              typeof handlerArgConf?.pipe === 'function'
+                ? new handlerArgConf.pipe()
+                : handlerArgConf.pipe;
+
+            if (pipe) {
+              const validator = new ArgValidator(pipe, body, handlerParamMeta);
+              finalRouteData.handlerArgs.push(validator);
+            } else {
+              finalRouteData.handlerArgs.push(body);
             }
-            finalRouteData.handlerArgs.push(validatedBody);
           } else {
             // should throw ???
             finalRouteData.handlerArgs.push(undefined);
@@ -140,6 +154,8 @@ export default class Router {
     return {
       handler: finalRouteData.handler.bind(finalRouteData.controller),
       args: finalRouteData.handlerArgs,
+      controller: finalRouteData.controller!,
+      handlerName: finalRouteData.handler.name,
     };
   }
 }

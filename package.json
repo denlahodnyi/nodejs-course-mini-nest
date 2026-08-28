@@ -11,7 +11,8 @@
     "class-transformer": "^0.5.1",
     "class-validator": "^0.15.1",
     "reflect-metadata": "^0.2.2",
-    "superagent": "^10.3.0"
+    "superagent": "^10.3.0",
+    "zod": "4.4.3"
   },
   "devDependencies": {
     "@rollup/plugin-typescript": "^12.3.0",
