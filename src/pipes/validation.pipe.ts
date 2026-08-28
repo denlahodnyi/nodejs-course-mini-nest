@@ -5,18 +5,20 @@ import { ValidationError } from '../errors.js';
 
 export default class ValidationPipe implements Pipe {
   async transform(value: any, meta: any) {
+    console.log('ValidationPipe');
     if (!meta || !this.canValidate(meta)) {
       return value;
     }
     const object = plainToInstance(meta, value);
     const errors = await validate(object);
     if (errors.length > 0) {
-      const error = new ValidationError();
-      error.errors = errors.map((e) => ({
-        field: e.property,
-        constraints: Object.values(e.constraints ?? {}),
-      }));
-      throw error;
+      throw new ValidationError({
+        message: 'Validation error',
+        errors: errors.map((e) => ({
+          field: e.property,
+          constraints: Object.values(e.constraints ?? {}),
+        })),
+      });
     }
     return object;
   }

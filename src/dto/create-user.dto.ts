@@ -1,4 +1,5 @@
 import { IsEmail, IsInt, IsString } from 'class-validator';
+import z from 'zod';
 
 export default class CreateUserDto {
   @IsString()
@@ -13,3 +14,10 @@ export default class CreateUserDto {
   @IsInt()
   age!: number;
 }
+
+export const createUserSchema = z.object({
+  name: z.string(),
+  email: z.email(),
+  country: z.string(),
+  age: z.int(),
+});

@@ -9,5 +9,6 @@ export const PROVIDERS = Symbol('providers');
 export const PREFIX = Symbol('controller_prefix');
 export const ROUTES = Symbol('routes');
 export const ROUTE_PARAMS = Symbol('route_params');
-// export const POST_ROUTES = Symbol('post_routes');
+export const CONTROLLER_GUARDS = Symbol('controller_guard');
+export const ROUTE_GUARDS = Symbol('route_guard');
 export const DESIGN_PARAM_TOKEN = 'design:paramtypes';
