@@ -18,7 +18,7 @@ export default class ValidationPipe implements Pipe {
       }));
       throw error;
     }
-    return value;
+    return object;
   }
 
   private canValidate(metatype: Function): boolean {

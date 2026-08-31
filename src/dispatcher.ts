@@ -65,6 +65,8 @@ export default class Dispatcher<T> {
         req.on('error', () => {
           Dispatcher.serverError(res);
         });
+      } else {
+        Dispatcher.serverError(res);
       }
     });
   }

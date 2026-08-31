@@ -86,7 +86,11 @@ export default class Router {
           if (handlerArgConf?.type === 'param') {
             finalRouteData.handlerArgs.push(
               handlerArgConf.param
-                ? finalRouteData.params[handlerArgConf.param]
+                ? finalRouteData.params[
+                    handlerArgConf.param.startsWith(':')
+                      ? handlerArgConf.param
+                      : ':' + handlerArgConf.param
+                  ]
                 : finalRouteData.params,
             );
           } else if (handlerArgConf?.type === 'query') {
