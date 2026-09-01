@@ -30,7 +30,8 @@ export default class Router {
       controller?: Controller;
       params: { [key: string]: string }; // { ':id': '12' }
       handlerArgs: any[];
-    } = { params: {}, handlerArgs: [] };
+      isRegisteredPath: boolean;
+    } = { params: {}, handlerArgs: [], isRegisteredPath: true };
 
     let i = 0;
     for (const c of controllers) {
@@ -48,6 +49,12 @@ export default class Router {
 
       pathSegments.forEach((path, i) => {
         const pathConf = leaf?.[path] ?? leaf?._param;
+        if (!pathConf) {
+          finalRouteData.isRegisteredPath = false;
+          return;
+        }
+        if (!finalRouteData.isRegisteredPath) return;
+        finalRouteData.isRegisteredPath = true;
         if (i === pathSegments.length - 1) {
           finalRouteData.handler = pathConf?.handler;
           finalRouteData.controller = c;
@@ -62,6 +69,8 @@ export default class Router {
           leaf = pathConf.next;
         }
       });
+
+      if (!finalRouteData.isRegisteredPath) return;
 
       if (finalRouteData.handler) {
         // Construct arguments for the handler

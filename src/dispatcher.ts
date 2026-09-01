@@ -4,6 +4,7 @@ import type { Ctor, Module } from './types.js';
 import Container from './container.js';
 import Router from './router.js';
 import { ValidationError } from './errors.js';
+import type { AddressInfo } from 'node:net';
 
 export default class Dispatcher<T> {
   private server?: Server;
@@ -66,7 +67,8 @@ export default class Dispatcher<T> {
           Dispatcher.serverError(res);
         });
       } else {
-        Dispatcher.serverError(res);
+        res.writeHead(405, { 'content-type': 'text/plain' });
+        res.end('Unhandled method');
       }
     });
   }
@@ -132,5 +134,9 @@ export default class Dispatcher<T> {
       await promisify(this.server.close).apply(this.server);
     }
     console.log('No running server');
+  }
+
+  public getPort() {
+    return (this.server?.address() as AddressInfo).port;
   }
 }

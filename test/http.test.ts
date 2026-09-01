@@ -9,8 +9,8 @@ import { Get, Post } from '../src/decorators/methods.js';
 import CreateUserDto from '../src/dto/create-user.dto.js';
 import ValidationPipe from '../src/pipes/validation.pipe.js';
 
-const PORT = 8080;
-const SERVER_URL = `localhost:${8080}`;
+let port: number;
+const getServerUrl = () => `localhost:${port}`;
 
 const users = [
   { name: 'Den', country: 'Ukraine', email: 'den@example.com', age: 20 },
@@ -53,7 +53,8 @@ let app: Dispatcher<AppModule>;
 
 beforeEach(async () => {
   app = new Dispatcher(AppModule);
-  await app.listen(PORT);
+  await app.listen(0);
+  port = app.getPort();
 });
 
 afterEach(async () => {
@@ -63,7 +64,7 @@ afterEach(async () => {
 
 test('GET /none returns 404 and error message', async () => {
   try {
-    await request.get(`${SERVER_URL}/none`);
+    await request.get(`${getServerUrl()}/none`);
     expect.fail('Should have thrown a 400 error');
   } catch (err: any) {
     expect(err.status).toBe(404);
@@ -72,7 +73,7 @@ test('GET /none returns 404 and error message', async () => {
 });
 
 test('GET /users/1 returns 200 and user', async () => {
-  const response = await request.get(`${SERVER_URL}/users/1`);
+  const response = await request.get(`${getServerUrl()}/users/1`);
   expect(response.statusCode).toBe(200);
   expect(response.body).toStrictEqual(users[1]);
 });
@@ -80,7 +81,7 @@ test('GET /users/1 returns 200 and user', async () => {
 test('GET /users?limit=10 returns 200 and user', async () => {
   const LIMIT = '10';
   const response = await request.get(
-    `${SERVER_URL}/users/test-query?limit=${LIMIT}`,
+    `${getServerUrl()}/users/test-query?limit=${LIMIT}`,
   );
   expect(response.statusCode).toBe(200);
   expect(response.body).toBe(LIMIT);
@@ -94,7 +95,7 @@ test('POST /users returns 201 and user', async () => {
     email: 'lis@example.com',
   };
   const response = await request
-    .post(`${SERVER_URL}/users`)
+    .post(`${getServerUrl()}/users`)
     .set('Content-Type', 'application/json')
     .send(JSON.stringify(NEW_USER));
   expect(response.statusCode).toBe(201);
@@ -108,7 +109,7 @@ test('POST /users returns 400 and validation errors for invalid user', async () 
   };
   try {
     await request
-      .post(`${SERVER_URL}/users`)
+      .post(`${getServerUrl()}/users`)
       .set('Content-Type', 'application/json')
       .send(JSON.stringify(NEW_USER));
     expect.fail('Should have thrown a 400 error');
