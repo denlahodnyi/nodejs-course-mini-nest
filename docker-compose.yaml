@@ -9,8 +9,8 @@ services:
       target: runner
       context: .
       dockerfile: Dockerfile
-    # ports:
-    #   - "8080"
+    ports:
+      - "8080"
     # environment:
     #   DB_URL: "postgresql://admin:secret@db:5432/demo_db"
     # depends_on:
